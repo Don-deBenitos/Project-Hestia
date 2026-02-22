@@ -1,0 +1,23 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    @apply scroll-smooth overflow-x-hidden;
+  }
+  body {
+    @apply font-body text-baby-text bg-cream antialiased min-h-screen overflow-x-hidden dark:bg-dark-bg dark:text-dark-text;
+  }
+}
+
+@keyframes fall {
+  from {
+    transform: translateY(-20px) rotate(0deg);
+    opacity: 0.6;
+  }
+  to {
+    transform: translateY(100vh) rotate(360deg);
+    opacity: 0.15;
+  }
+}
