@@ -30,17 +30,15 @@ export default function Home() {
               Hestia Elif
             </h1>
             <p className="mt-4 text-white/90 text-base leading-relaxed max-w-md mx-auto">
-              A gentle corner of the web for our little one — photos, milestones, and messages from everyone who loves her.
+              A place to share her journey — photos, milestones, and messages from everyone who loves her.
             </p>
             <Link
               to="/gallery"
               className="mt-8 inline-flex min-h-[48px] items-center justify-center gap-3 rounded-lg border-2 border-white px-6 py-3 font-medium text-white no-underline transition hover:bg-white/10 active:bg-white/20"
             >
               <span className="flex h-8 w-8 items-center justify-center rounded-full bg-hero-accent text-white">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                  <circle cx="8.5" cy="8.5" r="1.5" />
-                  <polyline points="21 15 16 10 5 21" />
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
                 </svg>
               </span>
               View gallery
@@ -55,7 +53,7 @@ export default function Home() {
           Hestia's corner
         </h2>
         <p className="text-baby-text-soft dark:text-dark-text-soft max-w-xl mx-auto">
-          This is her little corner of the web — photos, first milestones, and messages from the people who love her.
+          A place to share her journey — photos, first milestones, and messages from the people who love her.
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-3">
           <Link to="/gallery" className="text-baby-text underline hover:no-underline dark:text-dark-text">Gallery</Link>

@@ -2,6 +2,7 @@ import { useLocation, Outlet } from 'react-router-dom'
 import Nav from './Nav'
 import ThemeToggle from './ThemeToggle'
 import FallingHearts from './FallingHearts'
+import BubbleHearts from './BubbleHearts'
 
 export default function Layout() {
   const location = useLocation()
@@ -10,6 +11,7 @@ export default function Layout() {
   return (
     <>
       <FallingHearts />
+      <BubbleHearts />
       <header
         className={`sticky top-0 z-50 transition-colors ${
           isHome

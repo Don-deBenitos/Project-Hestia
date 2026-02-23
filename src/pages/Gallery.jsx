@@ -9,6 +9,7 @@ import {
   removePhoto,
 } from '../lib/galleryApi'
 import { isSupabaseConfigured } from '../lib/supabase'
+import { useAuth } from '../contexts/AuthContext'
 
 // Fallback when Supabase is not configured
 const GALLERY_TIMELINE = [
@@ -54,7 +55,13 @@ function SlideShow({ photos }) {
   const prev = () => setIndex((i) => (i === 0 ? len - 1 : i - 1))
   const next = () => setIndex((i) => (i === len - 1 ? 0 : i + 1))
 
-  if (len === 0) return null
+  if (len === 0) {
+    return (
+      <div className="rounded-2xl border border-dashed border-beige-dark bg-beige-dark/20 py-16 text-center text-baby-text-soft dark:border-dark-border dark:bg-dark-surface/30 dark:text-dark-text-soft">
+        No photos in this section.
+      </div>
+    )
+  }
   const current = photos[index]
 
   return (
@@ -112,8 +119,9 @@ export default function Gallery() {
   const [editingTitleValue, setEditingTitleValue] = useState('')
   const [newSectionTitle, setNewSectionTitle] = useState('')
   const [error, setError] = useState(null)
-
+  const { user } = useAuth()
   const configured = isSupabaseConfigured()
+  const canManage = configured && !!user
 
   /** Entries from Supabase have UUID; fallback entries have id like 'local-1' and are read-only in manage mode */
   const isSupabaseEntry = (entry) => entry?.id && !String(entry.id).startsWith('local-')
@@ -121,11 +129,24 @@ export default function Gallery() {
   useEffect(() => {
     setError(null)
     if (configured) {
-      fetchGalleryEntries().then((data) => {
-        setLoading(false)
-        if (Array.isArray(data) && data.length > 0) setEntries(data)
-        else setEntries(GALLERY_TIMELINE)
-      })
+      fetchGalleryEntries()
+        .then((data) => {
+          setLoading(false)
+          if (data === null) {
+            setError('Could not load gallery.')
+            setEntries(GALLERY_TIMELINE)
+          } else if (Array.isArray(data)) {
+            setEntries(data)
+          } else {
+            setEntries(GALLERY_TIMELINE)
+          }
+        })
+        .catch((err) => {
+          console.error('Gallery load error:', err)
+          setLoading(false)
+          setError('Could not load gallery.')
+          setEntries(GALLERY_TIMELINE)
+        })
     } else {
       setLoading(false)
       setEntries(GALLERY_TIMELINE)
@@ -135,12 +156,19 @@ export default function Gallery() {
   const refresh = async () => {
     if (!configured) return
     setError(null)
-    const data = await fetchGalleryEntries()
-    if (data === null) {
+    try {
+      const data = await fetchGalleryEntries()
+      if (data === null) {
+        setError('Could not load gallery.')
+        setEntries(GALLERY_TIMELINE)
+        return
+      }
+      setEntries(Array.isArray(data) ? data : GALLERY_TIMELINE)
+    } catch (err) {
+      console.error('Gallery refresh error:', err)
       setError('Could not load gallery.')
-      return
+      setEntries(GALLERY_TIMELINE)
     }
-    setEntries(Array.isArray(data) && data.length > 0 ? data : GALLERY_TIMELINE)
   }
 
   const handleAddSection = async () => {
@@ -181,19 +209,38 @@ export default function Gallery() {
     if (!file) return
     setError(null)
     setUploading(entryId)
-    const result = await uploadPhoto(entryId, file, alt || '')
-    setUploading(null)
-    if (result) {
-      await refresh()
-    } else {
-      setError('Could not upload photo. Check that the "gallery" storage bucket exists and allows uploads.')
+    try {
+      const result = await uploadPhoto(entryId, file, alt || '')
+      if (result?.success && result.src) {
+        await refresh()
+      } else {
+        const err = result?.error
+        const msg =
+          typeof err?.message === 'string'
+            ? err.message
+            : typeof err?.error === 'string'
+              ? err.error
+              : err?.error_description || (err && JSON.stringify(err))
+        setError(
+          msg ||
+            'Could not upload photo. Check that the "gallery" storage bucket exists and allows uploads. Open the browser console (F12) for details.'
+        )
+      }
+    } catch (err) {
+      setError(err?.message || 'Upload failed.')
+    } finally {
+      setUploading(null)
     }
   }
 
   const handleUpdateAlt = async (entryId, photoIndex, alt) => {
     setError(null)
     const ok = await updatePhotoAlt(entryId, photoIndex, alt)
-    if (ok) await refresh()
+    if (ok) {
+      await refresh()
+    } else {
+      setError('Could not update caption.')
+    }
   }
 
   const handleRemovePhoto = async (entryId, photoIndex, photos) => {
@@ -220,14 +267,16 @@ export default function Gallery() {
             Photo Gallery
           </h1>
           <p className="mt-2 text-baby-text-soft dark:text-dark-text-soft">Precious moments of Hestia Elif</p>
-          {configured && (
-            <button
-              type="button"
-              onClick={() => { setManageMode((m) => !m); setError(null); }}
-              className="mt-4 rounded-lg bg-baby-accent px-4 py-2 text-sm font-medium text-white transition hover:opacity-90 dark:bg-dark-accent"
-            >
-              {manageMode ? 'Done editing' : 'Manage gallery'}
-            </button>
+          {canManage && (
+            <div className="mt-4">
+              <button
+                type="button"
+                onClick={() => { setManageMode((m) => !m); setError(null); }}
+                className="rounded-lg bg-baby-accent px-4 py-2 text-sm font-medium text-white transition hover:opacity-90 dark:bg-dark-accent"
+              >
+                {manageMode ? 'Done editing' : 'Manage gallery'}
+              </button>
+            </div>
           )}
           {error && (
             <p className="mt-4 rounded-lg bg-red-100 px-4 py-2 text-sm text-red-800 dark:bg-red-900/40 dark:text-red-200" role="alert">
@@ -252,7 +301,7 @@ export default function Gallery() {
                     <div className="h-3 w-3 rounded-full bg-baby-accent dark:bg-dark-accent ring-4 ring-cream dark:ring-dark-bg" />
                   </div>
                   <div className="flex-1 min-w-0 pb-2">
-                    {manageMode && configured ? (
+                    {manageMode && canManage ? (
                       <>
                         {!isSupabaseEntry(entry) ? (
                           <p className="text-sm text-baby-text-soft dark:text-dark-text-soft py-2">
@@ -375,7 +424,7 @@ export default function Gallery() {
               </div>
             ))}
 
-            {manageMode && configured && (
+            {manageMode && canManage && (
               <div className="flex flex-wrap items-center gap-2 rounded-xl border border-dashed border-beige-dark p-4 dark:border-dark-border">
                 <input
                   type="text"

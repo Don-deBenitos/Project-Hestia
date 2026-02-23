@@ -8,6 +8,7 @@ const links = [
   { to: '/milestones', label: 'Milestones' },
   { to: '/about', label: 'About' },
   { to: '/messages', label: 'Messages' },
+  { to: '/admin', label: 'Admin' },
 ]
 
 export default function Nav({ isHero = false }) {

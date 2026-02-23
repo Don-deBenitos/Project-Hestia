@@ -8,26 +8,26 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Pink & cream — soft pinks, ivory, rose
-        cream: '#FDF8F5',
+        // Lighter pink theme — soft pastels, ivory, rose
+        cream: '#FEF9F7',
         beige: {
-          DEFAULT: '#F0E6E2',
-          dark: '#E5D8D2',
+          DEFAULT: '#F5EDEA',
+          dark: '#EDE2DE',
         },
         blush: {
-          DEFAULT: '#E8C4C4',
-          soft: '#F5E8E8',
+          DEFAULT: '#F0D6D6',
+          soft: '#FAF2F2',
         },
         sky: {
-          DEFAULT: '#F2E8EB',
-          soft: '#F8F2F4',
+          DEFAULT: '#F6EEF0',
+          soft: '#FCF8F9',
         },
         baby: {
           text: '#4A3C3C',
           'text-soft': '#7A6A6A',
-          accent: '#B89595',
-          'accent-blush': '#D4B4B4',
-          'accent-sky': '#C9B0B8',
+          accent: '#C9A8A8',
+          'accent-blush': '#E0C8C8',
+          'accent-sky': '#D4BEC4',
         },
         // Dark mode — warm dusk
         'dark-bg': '#1A1518',
@@ -38,8 +38,8 @@ export default {
         'dark-text-soft': '#A89A9E',
         'dark-accent': '#6B5558',
         'dark-accent-hover': '#7D6568',
-        // Rose accent
-        'hero-accent': '#B87A8A',
+        // Rose accent (lighter)
+        'hero-accent': '#D4A0A8',
       },
       fontFamily: {
         display: ['Cormorant Infant', 'Georgia', 'serif'],

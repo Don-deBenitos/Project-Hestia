@@ -120,7 +120,9 @@ export async function deleteGalleryEntry(entryId, photos = []) {
  * @returns {Promise<{ src: string }|null>}
  */
 export async function uploadPhoto(entryId, file, alt = '') {
-  if (!isSupabaseConfigured()) return null
+  if (!isSupabaseConfigured()) {
+    return { success: false, error: { message: 'Supabase is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.' } }
+  }
   const ext = file.name.split('.').pop() || 'jpg'
   const path = `${entryId}/${crypto.randomUUID()}.${ext}`
   const { error: uploadError } = await supabase.storage.from(BUCKET).upload(path, file, {
@@ -129,7 +131,7 @@ export async function uploadPhoto(entryId, file, alt = '') {
   })
   if (uploadError) {
     console.error('Upload photo error:', uploadError)
-    return null
+    return { success: false, error: uploadError }
   }
   const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(path)
   const src = urlData?.publicUrl ?? ''
@@ -141,7 +143,7 @@ export async function uploadPhoto(entryId, file, alt = '') {
     .single()
   if (selectError) {
     console.error('Select photos for update error:', selectError)
-    return null
+    return { success: false, error: selectError }
   }
   const photos = Array.isArray(row?.photos) ? [...row.photos] : []
   photos.push({ src, alt })
@@ -152,9 +154,9 @@ export async function uploadPhoto(entryId, file, alt = '') {
     .eq('id', entryId)
   if (updateError) {
     console.error('Update photos after upload error:', updateError)
-    return null
+    return { success: false, error: updateError }
   }
-  return { src, alt }
+  return { success: true, src, alt }
 }
 
 /**

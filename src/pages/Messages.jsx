@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { isSupabaseConfigured } from '../lib/supabase'
+import { useAuth } from '../contexts/AuthContext'
 import {
   fetchMessages,
   addMessage,
@@ -15,12 +16,28 @@ const WELCOME_MESSAGE = {
   body: "This is your very own corner of the internet, Hestia. One day you'll read all the messages here and know how loved you are. 💕",
 }
 
-const DUMMY_MESSAGES = [
-  { author: 'Grandma', date: 'March 1, 2026', body: 'Welcome to the world, sweet Hestia Elif! I can\'t wait to hold you and watch you grow. You are so loved. 🌸' },
-  { author: 'Uncle Alex', date: 'March 5, 2026', body: 'Hey little one! Your cousin is already asking when you can play together. So happy you\'re here.' },
-  { author: 'Auntie M.', date: 'March 10, 2026', body: 'Hestia, you have the most beautiful name. Sending you so much love and cuddles from across the miles. 💕' },
-  { author: 'Family friends', date: 'March 15, 2026', body: 'Congratulations! We\'ve been following your photos — you are absolutely precious. Can\'t wait to meet you in person.' },
-]
+const MY_MESSAGE_IDS_KEY = 'baby_my_message_ids'
+
+function getMyMessageIds() {
+  try {
+    const raw = localStorage.getItem(MY_MESSAGE_IDS_KEY)
+    return raw ? JSON.parse(raw) : []
+  } catch {
+    return []
+  }
+}
+
+function addMyMessageId(id) {
+  try {
+    const ids = getMyMessageIds()
+    if (ids.includes(id)) return
+    localStorage.setItem(MY_MESSAGE_IDS_KEY, JSON.stringify([...ids, id]))
+  } catch {}
+}
+
+function canEditMessage(id) {
+  return getMyMessageIds().includes(id)
+}
 
 function makeId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2)}`
@@ -66,8 +83,11 @@ export default function Messages() {
   const [editAuthor, setEditAuthor] = useState('')
   const [editBody, setEditBody] = useState('')
   const [showThankYou, setShowThankYou] = useState(false)
+  const { user: adminUser } = useAuth()
 
   const useSupabase = isSupabaseConfigured()
+
+  const canEditOrRemove = (id) => canEditMessage(id) || !!adminUser
 
   // Load messages: from Supabase if configured, else from localStorage
   useEffect(() => {
@@ -101,14 +121,17 @@ export default function Messages() {
     if (useSupabase) {
       const created = await addMessage(a, b)
       if (created) {
+        addMyMessageId(created.id)
         setMessages((prev) => [created, ...prev])
         setBody('')
         setShowThankYou(true)
       }
     } else {
+      const newId = makeId()
+      addMyMessageId(newId)
       setMessages((prev) => [
         {
-          id: makeId(),
+          id: newId,
           author: a,
           date: new Date().toLocaleDateString('en-US', {
             year: 'numeric',
@@ -289,23 +312,6 @@ export default function Messages() {
               </p>
             </div>
           </li>
-          {DUMMY_MESSAGES.map((m, i) => (
-            <li
-              key={`dummy-${i}`}
-              className="flex gap-4 rounded-2xl border border-beige-dark/60 bg-cream p-5 shadow-soft dark:border-dark-border/60 dark:bg-dark-surface dark:shadow-soft-dark"
-            >
-              <Avatar name={m.author} isWelcome={false} />
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-baseline gap-2">
-                  <span className="font-semibold text-baby-text dark:text-dark-text">{m.author}</span>
-                  <span className="text-xs text-baby-text-soft dark:text-dark-text-soft">{m.date}</span>
-                </div>
-                <p className="mt-2 whitespace-pre-wrap text-baby-text leading-relaxed dark:text-dark-text">
-                  {m.body}
-                </p>
-              </div>
-            </li>
-          ))}
           {messages.map((m) => (
             <li
               key={m.id}
@@ -353,24 +359,26 @@ export default function Messages() {
                         <span className="font-semibold text-baby-text dark:text-dark-text">{m.author}</span>
                         <span className="text-xs text-baby-text-soft dark:text-dark-text-soft">{m.date}</span>
                       </div>
-                      <div className="flex gap-2">
-                        <button
-                          type="button"
-                          onClick={() => startEdit(m)}
-                          className="min-h-[44px] min-w-[44px] rounded-lg px-3 py-2 text-sm font-medium text-baby-text-soft transition hover:bg-blush hover:text-baby-text dark:hover:bg-dark-surface-alt dark:hover:text-dark-text"
-                          title="Edit message"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => removeMessage(m.id)}
-                          className="min-h-[44px] min-w-[44px] rounded-lg px-3 py-2 text-sm font-medium text-baby-text-soft transition hover:bg-red-100 hover:text-red-700 dark:hover:bg-red-900/30 dark:hover:text-red-300"
-                          title="Remove message"
-                        >
-                          Remove
-                        </button>
-                      </div>
+                      {canEditOrRemove(m.id) && (
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => startEdit(m)}
+                            className="min-h-[44px] min-w-[44px] rounded-lg px-3 py-2 text-sm font-medium text-baby-text-soft transition hover:bg-blush hover:text-baby-text dark:hover:bg-dark-surface-alt dark:hover:text-dark-text"
+                            title="Edit your message"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => removeMessage(m.id)}
+                            className="min-h-[44px] min-w-[44px] rounded-lg px-3 py-2 text-sm font-medium text-baby-text-soft transition hover:bg-red-100 hover:text-red-700 dark:hover:bg-red-900/30 dark:hover:text-red-300"
+                            title="Remove your message"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      )}
                     </div>
                     <p className="mt-2 whitespace-pre-wrap text-baby-text leading-relaxed dark:text-dark-text">
                       {m.body}

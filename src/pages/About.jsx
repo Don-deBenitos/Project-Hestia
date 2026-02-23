@@ -32,7 +32,7 @@ export default function About() {
           <h2 className="font-display text-4xl font-medium text-baby-text sm:text-5xl dark:text-dark-text">Hestia Elif</h2>
           <p className="mt-2 text-lg text-baby-text dark:text-dark-text">Born February 20, 2026</p>
           <p className="mt-3 text-baby-text-soft dark:text-dark-text-soft">
-            Our little flame. Hestia arrived in the quiet of winter and has been lighting up our days ever since.
+            Our little flame. She arrived with the softest yawns and the tiniest fingers, and has been lighting up our days ever since.
           </p>
         </div>
 
