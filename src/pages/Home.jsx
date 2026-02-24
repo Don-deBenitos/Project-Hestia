@@ -1,21 +1,28 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 
 // Use your baby photo: add a JPG or PNG as public/image/banner.jpg (browsers don't support HEIC)
-const HERO_IMAGE = '/image/banner.jpg'
+// BASE_URL ensures correct path when deployed to a subpath (e.g. GitHub Pages)
+const HERO_IMAGE = `${import.meta.env.BASE_URL}image/banner.jpg`
 
 export default function Home() {
+  const [bannerError, setBannerError] = useState(false)
+
   return (
     <>
       {/* Full-bleed hero — single banner image, no carousel */}
       <section className="relative min-h-screen w-full overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-blush-soft via-cream to-sky-soft dark:from-dark-surface dark:via-dark-bg dark:to-dark-surface-alt" aria-hidden />
         <div className="absolute inset-0">
-          <img
-            src={HERO_IMAGE}
-            alt=""
-            className="h-full w-full object-cover object-center"
-            style={{ display: 'block' }}
-          />
+          {!bannerError && (
+            <img
+              src={HERO_IMAGE}
+              alt=""
+              className="h-full w-full object-cover object-center"
+              style={{ display: 'block' }}
+              onError={() => setBannerError(true)}
+            />
+          )}
         </div>
         <div className="absolute inset-0 bg-black/50 dark:bg-black/60" aria-hidden />
 
