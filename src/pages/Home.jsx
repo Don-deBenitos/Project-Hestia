@@ -30,11 +30,8 @@ export default function Home() {
         <div className="relative z-10 flex min-h-screen flex-col justify-center px-4 pt-20 pb-10 sm:px-6 sm:pt-24 sm:pb-12">
           <div className="mx-auto max-w-xl w-full text-center">
             <div className="h-px w-12 bg-white/80 mb-4 mx-auto" />
-            <p className="font-body text-sm uppercase tracking-[0.25em] text-white/90 mb-2">
-              Welcome to
-            </p>
             <h1 className="font-display text-4xl font-semibold tracking-wide text-white sm:text-5xl md:text-6xl">
-              Hestia Elif
+              Welcome Hestia Elif Journey
             </h1>
             <p className="mt-4 text-white/90 text-base leading-relaxed max-w-md mx-auto">
               A place to share her journey — photos, milestones, and messages from everyone who loves her.

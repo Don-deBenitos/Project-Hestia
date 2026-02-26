@@ -55,7 +55,7 @@ function isVideo(item) {
   return item?.type === 'video' || isVideoMedia(item?.src)
 }
 
-function SlideShow({ photos }) {
+function SlideShow({ photos, onOpen }) {
   const [index, setIndex] = useState(0)
   const [inView, setInView] = useState(false)
   const containerRef = useRef(null)
@@ -97,20 +97,22 @@ function SlideShow({ photos }) {
               <video
                 key={current.src}
                 src={current.src}
-                className="h-full w-full object-cover"
+                className="h-full w-full object-cover cursor-pointer"
                 controls
                 playsInline
                 preload="metadata"
                 aria-label={current.alt || 'Video'}
+                onClick={onOpen ? () => onOpen(index) : undefined}
               />
             ) : (
               <img
                 src={current.src}
                 alt={current.alt}
-                className="h-full w-full object-cover"
+                className="h-full w-full object-cover cursor-pointer"
                 loading="eager"
                 decoding="async"
                 fetchPriority="high"
+                onClick={onOpen ? () => onOpen(index) : undefined}
               />
             )}
             {len > 1 && (
@@ -162,12 +164,53 @@ export default function Gallery() {
   const [editingTitleValue, setEditingTitleValue] = useState('')
   const [newSectionTitle, setNewSectionTitle] = useState('')
   const [error, setError] = useState(null)
+  const [lightboxEntry, setLightboxEntry] = useState(null)
+  const [lightboxIndex, setLightboxIndex] = useState(0)
   const { user } = useAuth()
   const configured = isSupabaseConfigured()
   const canManage = configured && !!user
 
   /** Entries from Supabase have UUID; fallback entries have id like 'local-1' and are read-only in manage mode */
   const isSupabaseEntry = (entry) => entry?.id && !String(entry.id).startsWith('local-')
+
+  const hasLightbox = !!(lightboxEntry && Array.isArray(lightboxEntry.photos) && lightboxEntry.photos.length)
+
+  const openLightbox = (entry, startIndex = 0) => {
+    if (!entry || !Array.isArray(entry.photos) || !entry.photos.length) return
+    setLightboxEntry(entry)
+    setLightboxIndex(startIndex)
+  }
+
+  const closeLightbox = () => {
+    setLightboxEntry(null)
+    setLightboxIndex(0)
+  }
+
+  useEffect(() => {
+    if (!hasLightbox) return
+    const handleKey = (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        closeLightbox()
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault()
+        setLightboxIndex((i) => {
+          const total = lightboxEntry?.photos?.length || 0
+          if (!total) return 0
+          return i === 0 ? total - 1 : i - 1
+        })
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault()
+        setLightboxIndex((i) => {
+          const total = lightboxEntry?.photos?.length || 0
+          if (!total) return 0
+          return i === total - 1 ? 0 : i + 1
+        })
+      }
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [hasLightbox, lightboxEntry])
 
   useEffect(() => {
     setError(null)
@@ -476,7 +519,10 @@ export default function Gallery() {
                         <h2 className="font-display text-xl font-medium text-baby-text dark:text-dark-text mb-4">
                           {entry.title}
                         </h2>
-                        <SlideShow photos={entry.photos} />
+                        <SlideShow
+                          photos={entry.photos}
+                          onOpen={(startIndex) => openLightbox(entry, startIndex)}
+                        />
                       </>
                     )}
                   </div>
@@ -512,6 +558,156 @@ export default function Gallery() {
           </p>
         )}
       </section>
+
+      {hasLightbox && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-4 py-6 backdrop-blur-sm"
+          onClick={closeLightbox}
+        >
+          <div
+            className="relative flex w-full max-w-4xl flex-col gap-4 rounded-2xl bg-cream p-4 shadow-xl dark:bg-dark-surface"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between gap-4">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium text-baby-text dark:text-dark-text">
+                  {lightboxEntry?.title}
+                </p>
+                <p className="text-xs text-baby-text-soft dark:text-dark-text-soft">
+                  {lightboxIndex + 1} of {lightboxEntry?.photos?.length || 0}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={closeLightbox}
+                className="rounded-full bg-black/10 px-3 py-1 text-xs font-medium text-baby-text hover:bg-black/20 dark:bg-white/10 dark:text-dark-text dark:hover:bg-white/20"
+              >
+                Close
+              </button>
+            </div>
+
+            {lightboxEntry?.photos?.length > 0 && (
+              <div className="relative w-full">
+                <div className="aspect-[4/3] overflow-hidden rounded-xl bg-black/40">
+                  {(() => {
+                    const media = lightboxEntry.photos[lightboxIndex] || lightboxEntry.photos[0]
+                    const mediaIsVideo = isVideo(media)
+                    if (mediaIsVideo) {
+                      return (
+                        <video
+                          key={media.src}
+                          src={media.src}
+                          className="h-full w-full object-contain"
+                          controls
+                          playsInline
+                          preload="metadata"
+                          aria-label={media.alt || 'Video'}
+                        />
+                      )
+                    }
+                    return (
+                      <img
+                        src={media.src}
+                        alt={media.alt}
+                        className="h-full w-full object-contain"
+                        loading="eager"
+                        decoding="async"
+                      />
+                    )
+                  })()}
+                </div>
+
+                {lightboxEntry.photos.length > 1 && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setLightboxIndex((i) => {
+                          const total = lightboxEntry.photos.length
+                          return i === 0 ? total - 1 : i - 1
+                        })
+                      }
+                      className="absolute left-2 top-1/2 -translate-y-1/2 flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full bg-black/60 text-white shadow-md hover:bg-black/80"
+                      aria-label="Previous item"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6"/></svg>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setLightboxIndex((i) => {
+                          const total = lightboxEntry.photos.length
+                          return i === total - 1 ? 0 : i + 1
+                        })
+                      }
+                      className="absolute right-2 top-1/2 -translate-y-1/2 flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full bg-black/60 text-white shadow-md hover:bg-black/80"
+                      aria-label="Next item"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6"/></svg>
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+
+            {lightboxEntry?.photos?.length > 1 && (
+              <div className="mt-1 flex max-h-24 gap-2 overflow-x-auto py-1">
+                {lightboxEntry.photos.map((item, idx) => {
+                  const thumbIsVideo = isVideo(item)
+                  return (
+                    <button
+                      key={item.src + idx}
+                      type="button"
+                      onClick={() => setLightboxIndex(idx)}
+                      className={`relative h-16 flex-shrink-0 overflow-hidden rounded-lg border ${
+                        idx === lightboxIndex
+                          ? 'border-baby-accent ring-2 ring-baby-accent/60'
+                          : 'border-beige-dark/60 dark:border-dark-border/60'
+                      }`}
+                    >
+                      {thumbIsVideo ? (
+                        <div className="relative h-full w-24 bg-black/60">
+                          <video
+                            src={item.src}
+                            className="h-full w-full object-cover opacity-80"
+                            preload="metadata"
+                            muted
+                            playsInline
+                            aria-hidden
+                          />
+                          <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                            <div className="rounded-full bg-black/60 p-1 text-white">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <img
+                          src={item.src}
+                          alt={item.alt}
+                          className="h-full w-24 object-cover"
+                          loading="lazy"
+                          decoding="async"
+                        />
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+
+            {(() => {
+              const media = lightboxEntry?.photos?.[lightboxIndex]
+              if (!media?.alt) return null
+              return (
+                <p className="mt-1 text-xs text-baby-text-soft dark:text-dark-text-soft">
+                  {media.alt}
+                </p>
+              )
+            })()}
+          </div>
+        </div>
+      )}
     </>
   )
 }
