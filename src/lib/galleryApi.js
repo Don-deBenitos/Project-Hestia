@@ -112,12 +112,22 @@ export async function deleteGalleryEntry(entryId, photos = []) {
   return true
 }
 
+/** Detect if file or URL is video (for type field and display). */
+export function isVideoMedia(fileOrUrl) {
+  if (!fileOrUrl) return false
+  if (typeof fileOrUrl === 'string') {
+    return /\.(mp4|webm|ogg|mov)(\?|$)/i.test(fileOrUrl)
+  }
+  const type = fileOrUrl.type || ''
+  return type.startsWith('video/')
+}
+
 /**
- * Upload a photo for an entry and append to its photos array.
+ * Upload a photo or video for an entry and append to its photos array.
  * @param {string} entryId
  * @param {File} file
  * @param {string} alt
- * @returns {Promise<{ src: string }|null>}
+ * @returns {Promise<{ success: boolean, src?: string, alt?: string, error?: object }>}
  */
 export async function uploadPhoto(entryId, file, alt = '') {
   if (!isSupabaseConfigured()) {
@@ -135,6 +145,7 @@ export async function uploadPhoto(entryId, file, alt = '') {
   }
   const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(path)
   const src = urlData?.publicUrl ?? ''
+  const type = isVideoMedia(file) ? 'video' : 'image'
 
   const { data: row, error: selectError } = await supabase
     .from('gallery_entries')
@@ -146,7 +157,7 @@ export async function uploadPhoto(entryId, file, alt = '') {
     return { success: false, error: selectError }
   }
   const photos = Array.isArray(row?.photos) ? [...row.photos] : []
-  photos.push({ src, alt })
+  photos.push({ src, alt, type })
 
   const { error: updateError } = await supabase
     .from('gallery_entries')

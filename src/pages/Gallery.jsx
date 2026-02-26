@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {
   fetchGalleryEntries,
   addGalleryEntry,
@@ -7,6 +7,7 @@ import {
   uploadPhoto,
   updatePhotoAlt,
   removePhoto,
+  isVideoMedia,
 } from '../lib/galleryApi'
 import { isSupabaseConfigured } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
@@ -49,8 +50,27 @@ const GALLERY_TIMELINE = [
   },
 ]
 
+/** Whether this gallery item is a video (by type or URL). */
+function isVideo(item) {
+  return item?.type === 'video' || isVideoMedia(item?.src)
+}
+
 function SlideShow({ photos }) {
   const [index, setIndex] = useState(0)
+  const [inView, setInView] = useState(false)
+  const containerRef = useRef(null)
+
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    const io = new IntersectionObserver(
+      ([entry]) => setInView(entry.isIntersecting),
+      { rootMargin: '200px', threshold: 0.01 }
+    )
+    io.observe(el)
+    return () => io.disconnect()
+  }, [])
+
   const len = photos.length
   const prev = () => setIndex((i) => (i === 0 ? len - 1 : i - 1))
   const next = () => setIndex((i) => (i === len - 1 ? 0 : i + 1))
@@ -58,51 +78,74 @@ function SlideShow({ photos }) {
   if (len === 0) {
     return (
       <div className="rounded-2xl border border-dashed border-beige-dark bg-beige-dark/20 py-16 text-center text-baby-text-soft dark:border-dark-border dark:bg-dark-surface/30 dark:text-dark-text-soft">
-        No photos in this section.
+        No photos or videos in this section.
       </div>
     )
   }
+
   const current = photos[index]
+  const currentIsVideo = isVideo(current)
 
   return (
-    <div className="relative overflow-hidden rounded-2xl bg-beige-dark shadow-soft dark:bg-dark-surface dark:shadow-soft-dark">
+    <div ref={containerRef} className="relative overflow-hidden rounded-2xl bg-beige-dark shadow-soft dark:bg-dark-surface dark:shadow-soft-dark [contain:layout_paint]">
       <div className="aspect-[4/3] relative">
-        <img
-          src={current.src}
-          alt={current.alt}
-          className="h-full w-full object-cover"
-        />
-        {len > 1 && (
+        {!inView ? (
+          <div className="absolute inset-0 bg-beige-dark/50 dark:bg-dark-surface/50" aria-hidden />
+        ) : (
           <>
-            <button
-              type="button"
-              onClick={prev}
-              className="absolute left-2 top-1/2 -translate-y-1/2 flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full bg-black/50 text-white transition hover:bg-black/70 active:bg-black/70"
-              aria-label="Previous photo"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6"/></svg>
-            </button>
-            <button
-              type="button"
-              onClick={next}
-              className="absolute right-2 top-1/2 -translate-y-1/2 flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full bg-black/50 text-white transition hover:bg-black/70 active:bg-black/70"
-              aria-label="Next photo"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6"/></svg>
-            </button>
-            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5">
-              {photos.map((_, i) => (
+            {currentIsVideo ? (
+              <video
+                key={current.src}
+                src={current.src}
+                className="h-full w-full object-cover"
+                controls
+                playsInline
+                preload="metadata"
+                aria-label={current.alt || 'Video'}
+              />
+            ) : (
+              <img
+                src={current.src}
+                alt={current.alt}
+                className="h-full w-full object-cover"
+                loading="eager"
+                decoding="async"
+                fetchPriority="high"
+              />
+            )}
+            {len > 1 && (
+              <>
                 <button
-                  key={i}
                   type="button"
-                  onClick={() => setIndex(i)}
-                  className={`h-2 rounded-full transition ${
-                    i === index ? 'w-6 bg-white' : 'w-2 bg-white/50 hover:bg-white/70'
-                  }`}
-                  aria-label={`Go to photo ${i + 1}`}
-                />
-              ))}
-            </div>
+                  onClick={prev}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full bg-black/50 text-white transition hover:bg-black/70 active:bg-black/70"
+                  aria-label="Previous"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6"/></svg>
+                </button>
+                <button
+                  type="button"
+                  onClick={next}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full bg-black/50 text-white transition hover:bg-black/70 active:bg-black/70"
+                  aria-label="Next"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6"/></svg>
+                </button>
+                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5">
+                  {photos.map((_, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => setIndex(i)}
+                      className={`h-2 rounded-full transition ${
+                        i === index ? 'w-6 bg-white' : 'w-2 bg-white/50 hover:bg-white/70'
+                      }`}
+                      aria-label={`Go to item ${i + 1}`}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
           </>
         )}
       </div>
@@ -292,7 +335,7 @@ export default function Gallery() {
         ) : (
           <div className="space-y-10 sm:space-y-12">
             {displayEntries.map((entry, i) => (
-              <div key={entry.id} className="relative">
+              <div key={entry.id} className="relative [content-visibility:auto] [contain-intrinsic-size:auto_300px]">
                 {i > 0 && (
                   <div className="absolute left-5 top-0 bottom-0 w-px bg-beige-dark dark:bg-dark-border -translate-y-12 sm:left-[1.25rem]" aria-hidden />
                 )}
@@ -356,15 +399,15 @@ export default function Gallery() {
                         {isSupabaseEntry(entry) && (
                           <>
                             <div className="mb-4 rounded-xl border border-dashed border-beige-dark p-4 dark:border-dark-border">
-                              <p className="mb-2 text-sm text-baby-text-soft dark:text-dark-text-soft">Upload photo</p>
+                              <p className="mb-2 text-sm text-baby-text-soft dark:text-dark-text-soft">Upload photo or video</p>
                               <input
                                 type="file"
-                                accept="image/*"
+                                accept="image/*,video/*"
                                 disabled={!!uploading}
                                 className="text-sm text-baby-text dark:text-dark-text"
                                 onChange={(e) => {
                                   const file = e.target.files?.[0]
-                                  const alt = prompt('Caption for this photo (optional):') || ''
+                                  const alt = prompt('Caption for this item (optional):') || ''
                                   if (file) handleUpload(entry.id, file, alt)
                                   e.target.value = ''
                                 }}
@@ -373,14 +416,31 @@ export default function Gallery() {
                             </div>
                             {entry.photos.length > 0 && (
                               <div className="space-y-3">
-                                <p className="text-sm font-medium text-baby-text dark:text-dark-text">Photos in this section</p>
+                                <p className="text-sm font-medium text-baby-text dark:text-dark-text">Items in this section</p>
                                 <div className="grid gap-3 sm:grid-cols-2">
                                   {entry.photos.map((photo, pi) => (
                                     <div
                                       key={pi}
                                       className="flex flex-col gap-2 rounded-lg border border-beige-dark bg-cream/50 p-3 dark:border-dark-border dark:bg-dark-surface/50"
                                     >
-                                      <img src={photo.src} alt={photo.alt} className="aspect-video w-full rounded object-cover" />
+                                      {isVideo(photo) ? (
+                                        <video
+                                          src={photo.src}
+                                          className="aspect-video w-full rounded object-cover"
+                                          preload="metadata"
+                                          muted
+                                          playsInline
+                                          aria-label={photo.alt || 'Video'}
+                                        />
+                                      ) : (
+                                        <img
+                                          src={photo.src}
+                                          alt={photo.alt}
+                                          className="aspect-video w-full rounded object-cover"
+                                          loading="lazy"
+                                          decoding="async"
+                                        />
+                                      )}
                                       <input
                                         type="text"
                                         defaultValue={photo.alt}
@@ -396,7 +456,7 @@ export default function Gallery() {
                                         onClick={() => handleRemovePhoto(entry.id, pi, entry.photos)}
                                         className="self-start text-sm text-red-600 dark:text-red-400"
                                       >
-                                        Remove photo
+                                        Remove
                                       </button>
                                     </div>
                                   ))}
@@ -405,7 +465,7 @@ export default function Gallery() {
                             )}
                             {!entry.photos.length && (
                               <p className="rounded-2xl border border-dashed border-beige-dark bg-beige-dark/30 py-8 text-center text-baby-text-soft dark:border-dark-border dark:bg-dark-surface/30 dark:text-dark-text-soft">
-                                No photos yet. Use the upload area above to add some.
+                                No photos or videos yet. Use the upload area above to add some.
                               </p>
                             )}
                           </>
