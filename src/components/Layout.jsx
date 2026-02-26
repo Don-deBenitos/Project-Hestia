@@ -15,8 +15,8 @@ export default function Layout() {
       <header
         className={`sticky top-0 z-50 transition-colors ${
           isHome
-            ? 'bg-black/40 backdrop-blur-sm'
-            : 'bg-gradient-to-b from-blush-soft/95 to-cream/80 backdrop-blur-md border-b border-beige-dark/30 dark:from-dark-surface dark:to-dark-bg dark:border-dark-border'
+            ? 'bg-black/35 backdrop-blur-md'
+            : 'bg-gradient-to-b from-blush-soft/90 to-cream/85 backdrop-blur-md border-b border-beige-dark/40 dark:from-dark-surface dark:to-dark-bg dark:border-dark-border'
         }`}
       >
         <div className="relative mx-auto max-w-6xl px-4 flex items-center justify-between gap-3 py-3 sm:px-6 sm:py-5 sm:gap-4">
@@ -24,7 +24,7 @@ export default function Layout() {
           <ThemeToggle isHero={isHome} />
         </div>
       </header>
-      <main className="relative z-10">
+      <main className="page-shell relative z-10">
         <Outlet />
       </main>
       <footer className="mt-12 border-t border-beige-dark py-8 text-center text-sm text-baby-text-soft dark:border-dark-border dark:text-dark-text-soft">

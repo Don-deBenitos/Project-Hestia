@@ -1,8 +1,8 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 
-const HEART_CHARS = ['💕', '❤️', '💗', '🤍', '💖']
-const MAX_HEARTS = 24
-const THROTTLE_MS = 120
+const HEART_CHARS = ['💕', '💗', '🤍']
+const MAX_HEARTS = 14
+const THROTTLE_MS = 160
 const BUBBLE_DURATION_MS = 1400
 
 export default function BubbleHearts() {
@@ -27,9 +27,9 @@ export default function BubbleHearts() {
 
     const id = nextId.current++
     const char = HEART_CHARS[Math.floor(Math.random() * HEART_CHARS.length)]
-    const size = 12 + Math.random() * 10
-    const offsetX = (Math.random() - 0.5) * 24
-    const offsetY = (Math.random() - 0.5) * 24
+    const size = 10 + Math.random() * 8
+    const offsetX = (Math.random() - 0.5) * 20
+    const offsetY = (Math.random() - 0.5) * 20
 
     setHearts((prev) => {
       const next = [...prev, { id, x: clientX + offsetX, y: clientY + offsetY, char, size }]
@@ -45,8 +45,8 @@ export default function BubbleHearts() {
   useEffect(() => {
     if (reduceMotion) return
     const handler = (e) => addHeart(e.clientX, e.clientY)
-    window.addEventListener('pointermove', handler, { passive: true })
-    return () => window.removeEventListener('pointermove', handler)
+    window.addEventListener('click', handler, { passive: true })
+    return () => window.removeEventListener('click', handler)
   }, [addHeart, reduceMotion])
 
   return (

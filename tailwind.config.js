@@ -8,38 +8,38 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Lighter pink theme — soft pastels, ivory, rose
-        cream: '#FEF9F7',
+        // Soft, modern pastel shell – warm neutral base
+        cream: '#FFF9F5',
         beige: {
-          DEFAULT: '#F5EDEA',
-          dark: '#EDE2DE',
+          DEFAULT: '#F4E7DE',
+          dark: '#E7D7CC',
         },
         blush: {
-          DEFAULT: '#F0D6D6',
-          soft: '#FAF2F2',
+          DEFAULT: '#F7DDE5',
+          soft: '#FDF3F7',
         },
         sky: {
-          DEFAULT: '#F6EEF0',
-          soft: '#FCF8F9',
+          DEFAULT: '#F3F4FB',
+          soft: '#F9FAFF',
         },
         baby: {
-          text: '#4A3C3C',
-          'text-soft': '#7A6A6A',
-          accent: '#C9A8A8',
-          'accent-blush': '#E0C8C8',
-          'accent-sky': '#D4BEC4',
+          text: '#3F3436',
+          'text-soft': '#7B6B70',
+          accent: '#E0B8C2',
+          'accent-blush': '#F4C9D2',
+          'accent-sky': '#D3C4E4',
         },
-        // Dark mode — warm dusk
-        'dark-bg': '#1A1518',
-        'dark-surface': '#261F23',
-        'dark-surface-alt': '#2E2629',
-        'dark-border': '#3D3338',
-        'dark-text': '#F5EDF0',
-        'dark-text-soft': '#A89A9E',
-        'dark-accent': '#6B5558',
-        'dark-accent-hover': '#7D6568',
-        // Rose accent (lighter)
-        'hero-accent': '#D4A0A8',
+        // Dark mode — soft dusk, less contrasty
+        'dark-bg': '#17131A',
+        'dark-surface': '#221C25',
+        'dark-surface-alt': '#29212D',
+        'dark-border': '#3A303D',
+        'dark-text': '#F6EDF5',
+        'dark-text-soft': '#B3A5B3',
+        'dark-accent': '#8A6A84',
+        'dark-accent-hover': '#9B7A93',
+        // Rose accent for pills / icons
+        'hero-accent': '#E7B2C0',
       },
       fontFamily: {
         display: ['Cormorant Infant', 'Georgia', 'serif'],

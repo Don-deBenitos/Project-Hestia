@@ -1,21 +1,13 @@
 import { useMemo } from 'react'
 
-const HEART_CHARS = ['💕', '❤️', '💗', '🤍', '💖']
+const HEART_CHARS = ['💕', '💗', '🤍']
 const FALLING_HEARTS_CONFIG = [
-  { left: 5, duration: 18, delay: 0 },
-  { left: 14, duration: 22, delay: 2 },
-  { left: 22, duration: 15, delay: 5 },
-  { left: 30, duration: 20, delay: 1 },
-  { left: 38, duration: 16, delay: 8 },
-  { left: 48, duration: 19, delay: 3 },
-  { left: 56, duration: 21, delay: 11 },
-  { left: 65, duration: 17, delay: 4 },
-  { left: 73, duration: 14, delay: 7 },
-  { left: 82, duration: 23, delay: 0 },
-  { left: 90, duration: 16, delay: 6 },
-  { left: 8, duration: 20, delay: 10 },
-  { left: 42, duration: 15, delay: 9 },
-  { left: 68, duration: 18, delay: 12 },
+  { left: 8, duration: 26, delay: 0 },
+  { left: 26, duration: 32, delay: 4 },
+  { left: 44, duration: 28, delay: 9 },
+  { left: 62, duration: 30, delay: 2 },
+  { left: 78, duration: 34, delay: 7 },
+  { left: 90, duration: 29, delay: 11 },
 ]
 
 export default function FallingHearts() {
@@ -24,7 +16,7 @@ export default function FallingHearts() {
       FALLING_HEARTS_CONFIG.map((config, i) => ({
         ...config,
         char: HEART_CHARS[i % HEART_CHARS.length],
-        size: 14 + (i % 3) * 6,
+        size: 12 + (i % 3) * 4,
       })),
     []
   )
@@ -37,7 +29,7 @@ export default function FallingHearts() {
       {hearts.map((heart, i) => (
         <span
           key={i}
-          className="absolute text-hero-accent/60 dark:text-hero-accent/50 will-change-transform"
+          className="absolute text-hero-accent/40 dark:text-hero-accent/35 will-change-transform"
           style={{
             left: `${heart.left}%`,
             top: '-30px',
